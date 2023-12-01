@@ -2,7 +2,7 @@
 
 An RHCE v8 lab enviroment with practice exams.
 
-![welcome](./welcome-page.jpg)
+![welcome](Welcome-page.jpg)
 
 This repo contains Vagrant and Ansible code that will help you setup a lab environment and practice for the RHCE v8 exam.
 
