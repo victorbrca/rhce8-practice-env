@@ -1,0 +1,107 @@
+---
+# tasks file for postgresql
+
+- name: Installs the VDO package
+  dnf:
+    name:
+      - vdo
+      - kmod-kvdo
+
+- name: Starts the VDO service
+  systemd:
+    name: vdo.service
+    state: started
+    enabled: true
+
+  # The force option in the vdo module is not present on Ansible 2.9
+- name: Checks if VDO volume already exists
+  command: vdostats databases_vdo
+  register: vdostats_output
+  changed_when: false
+  ignore_errors: true
+
+- name: Gets the HD with 10GB
+  shell: lsblk -l | grep 10G | awk '{print $1}'
+  register: selected_hd
+  when: vdostats_output.rc == 1
+
+- name: Creates the VDO partition
+  vdo:
+    name: databases_vdo
+    device: "/dev/{{ selected_hd.stdout }}"
+    logicalsize: 20G
+    writepolicy: auto
+    deduplication: disabled
+    #force: false
+  when: vdostats_output.rc == 1
+
+- name: Create the volume group
+  lvg:
+    pvs: /dev/mapper/databases_vdo
+    vg: databases_vg
+
+- name: Create the logical volume
+  lvol:
+    lv: databases_lv
+    vg: databases_vg
+    size: 100%FREE
+    force: false
+    shrink: false
+
+- name: Creates the ext4 filesystem
+  filesystem:
+    dev: /dev/mapper/databases_vg-databases_lv
+    fstype: ext4
+    opts: -E nodiscard
+
+- name: Mounts the filesystem
+  mount:
+    fstype: ext4
+    opts: defaults,_netdev,discard,x-systemd.requires=vdo.service,x-systemd.device-timeout=0
+    src: /dev/mapper/databases_vg-databases_lv
+    path: /data/databases
+    state: mounted
+
+- name: Installs the postgresql module
+  dnf:
+    name: '@postgresql'
+  register: postgresql_install
+
+- name: Configures the data folder for postgresql service
+  lineinfile:
+    path: /usr/lib/systemd/system/postgresql.service
+    line: 'Environment=PGDATA=/data/databases/postgresql_data'
+    regexp: '^Environment=PGDATA=.*'
+  notify: "Reload daemon"
+
+- name: Creates /data/databases/postgresql_data
+  file:
+    path: /data/databases/postgresql_data
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0700'
+  register: create_postgresql_data
+
+- name: Initializes the DB
+  command: postgresql-setup --initdb
+  args:
+    creates: /data/databases/postgresql_data/PG_VERSION
+
+- name: Installs semanage
+  dnf:
+    name: setroubleshoot-server
+
+- name: Enables the selinuxuser_postgresql_connect_enabled boolean
+  seboolean:
+    name: selinuxuser_postgresql_connect_enabled
+    state: yes
+    persistent: yes
+
+- name: Fixes the SELinux context for the postgresql data files
+  sefcontext:
+    target: '/data/databases(/.*)?'
+    setype: postgresql_db_t
+    state: present
+  notify: "Restore SELinux context"
+

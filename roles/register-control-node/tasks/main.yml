@@ -1,0 +1,32 @@
+---
+# tasks file for register-control-node
+
+- name: Register with Red Hat subscription
+  redhat_subscription:
+    username: "{{ username | default('NONE') }}"
+    password: "{{ password | mandatory }}"
+    release: "{{ release | default(omit) }}"
+    consumer_id: "{{ consumer_id | default(omit) }}"
+    consumer_type: "{{ consumer_type | default(omit) }}"
+    force_register: "{{ force_register | default(omit) }}"
+    pool_ids: "{{ pool_ids | default(omit) }}"
+    auto_attach: "{{ auto_attach | default(omit) }}"
+    state: present
+
+- name: Deletes local repo
+  file:
+    path: /etc/yum.repos.d/ipa.repo
+    state: absent
+
+# ansible-2.8-for-rhel-8-x86_64-rpms
+- name: Add ansible-2.9-for-rhel-8-x86_64-rpms
+  command: subscription-manager repos --enable ansible-2.9-for-rhel-8-x86_64-rpms
+  # when: is_ansible_repo_enabled.rc == 1
+  changed_when: false
+
+- name: Runs a system update
+  dnf:
+    name: '*'
+    state: latest
+    update_only: true
+    disablerepo: epel

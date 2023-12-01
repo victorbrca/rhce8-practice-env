@@ -1,0 +1,107 @@
+---
+- hosts: all
+  become: true
+  
+  handlers:
+    - name: Restat HTTPD
+      systemd:
+        name: httpd
+        state: restarted
+      listen: "Restart HTTPD"
+      when: '"webservers" in group_names'
+
+    - name: Backup httpd.conf
+      archive:
+        path: /etc/httpd/conf/httpd.conf
+        dest: "/data/backup/http.conf-{{ ansible_date_time.date | replace('-', '') }}_{{ ansible_date_time.time | replace(':', '') }}.zip"
+        format: zip
+      listen: "Backup httpd.conf"
+      when: '"webservers" in group_names'
+
+  tasks:
+    
+    - name: Uploads root_space_check.sh
+      copy:
+        src: /home/ansible/exam-files/files/root_space_check.sh
+        dest: /usr/local/bin/root_space_check.sh
+        mode: ugo+x
+
+    - name: Adds root_space_check.sh to con
+      cron:
+        name: Runs root_space_check.sh every hour
+        special_time: hourly
+        job: /usr/local/bin/root_space_check.sh
+
+    # Block starts
+    - name: Block for webservers
+      block:
+
+      - name: Installs httpd
+        dnf:
+          name: httpd
+  
+      - name: Enables the httpd service
+        systemd:
+          name: httpd
+          enabled: yes
+          state: started
+  
+      - name: Opens ports for httpd
+        firewalld:
+          service: "{{ item }}"
+          permanent: yes
+          state: enabled
+        loop:
+          - http
+          - https
+  
+      - name: Changes the Listen option in /etc/httpd/conf/httpd.conf
+        lineinfile:
+          path: /etc/httpd/conf/httpd.conf
+          line: "Listen {{ ansible_eth1.ipv4.address }}:80"
+          regexp: "^Listen .*"
+        notify: 
+          - "Restart HTTPD"
+          - "Backup httpd.conf"
+
+      when: '"webservers" in group_names'
+    # Block end
+
+    # Block starts
+    - name: Start block for databases
+      block:
+
+      - name: Creates PV and VG
+        lvg:
+          vg: databases_vg
+          pvs: /dev/sdb
+
+      - name: Create LV
+        lvol:
+          vg: databases_vg
+          lv: databases_lv
+          size: 100%FREE
+          shrink: false
+
+      - name: Formats to ext4
+        filesystem:
+          fstype: ext4
+          dev: /dev/mapper/databases_vg-databases_lv
+          opts: '-L DATABASES'
+
+      - name: Create the mountpoint for DATABASES
+        mount:
+          path: /data/databases
+          src: LABEL=DATABASES
+          fstype: ext4
+          state: mounted
+
+      when: '"mysql" in group_names'
+    # Block end
+
+    - name: Enables SELinux for databases
+      selinux:
+        state: enforcing
+        policy: targeted
+      when: '"databases" in group_names'
+

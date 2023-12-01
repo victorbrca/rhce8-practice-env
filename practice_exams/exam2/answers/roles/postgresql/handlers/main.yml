@@ -1,0 +1,20 @@
+---
+# handlers file for postgresql
+
+- name: Reload daemon
+  systemd:
+    name: postgresql.service
+    daemon_reload: true
+    enabled: true
+  listen: "Reload daemon"
+
+- name: Restore SELinux context
+  command: restorecon -irv /data/databases
+  listen: "Restore SELinux context"
+  notify: "Restart postgresql service"
+
+- name: Restart postgresql.service
+  systemd:
+    name: postgresql.service
+    state: restarted
+  listen: "Restart postgresql service"

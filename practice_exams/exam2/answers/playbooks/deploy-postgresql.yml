@@ -1,0 +1,49 @@
+---
+- hosts: postgresql
+  become: true
+
+  roles:
+    - postgresql
+
+  tasks:
+    - name: Checks if /data/db_troubleshoot exists
+      stat:
+        path: /data/db_troubleshoot
+      register: stat_db_troubleshoot
+
+    - name: Creates /data/db_troubleshoot
+      file:
+        path: /data/db_troubleshoot
+        state: directory
+        owner: postgres
+        group: postgres
+        mode: '0700'
+        force: false
+      when: stat_db_troubleshoot.stat.exists == false
+ 
+    - name: Creates the group pgsqladmin
+      group:
+        name: pgsqladmin
+    
+    - name: Creates the user dbadmin
+      user:
+        name: dbadmin
+        group: pgsqladmin
+    
+    - name: Sets default ACL for /data/db_troubleshoot
+      acl:
+        path: /data/db_troubleshoot
+        default: true
+        etype: group
+        entity: pgsqladmin
+        permissions: rwx
+        state: present
+    
+    - name: Sets ACL for /data/db_troubleshoot
+      acl:
+        path: /data/db_troubleshoot
+        etype: group
+        entity: pgsqladmin
+        permissions: rwx
+        state: present
+    

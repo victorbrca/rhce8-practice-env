@@ -1,0 +1,9 @@
+---
+- hosts: mysql
+  become: true
+
+  vars_files:
+    - /home/ansible/exam-files/vars/mysql.yml
+
+  roles:
+    - geerlingguy.mysql  

@@ -1,0 +1,11 @@
+---
+# defaults file for register-control-node
+
+username: ''
+password: ''
+# pool_ids: ""
+consumer_id: ''
+release: '8.4'
+consumer_type: ''
+force_register: false
+auto_attach: true

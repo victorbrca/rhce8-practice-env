@@ -1,0 +1,9 @@
+---
+- hosts: all
+  become: true
+
+  roles:
+    - name: start-page
+      when: '"webservers" in group_names'
+
+    - name: journald-persistent

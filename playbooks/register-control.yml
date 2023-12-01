@@ -1,0 +1,7 @@
+---
+- name: Register and configure control
+  hosts: control
+  become: true
+
+  roles:
+    - name: register-control-node

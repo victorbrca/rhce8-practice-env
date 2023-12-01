@@ -1,0 +1,18 @@
+---
+
+- name: Setting Up Node
+  hosts: all
+  become: true
+  ignore_errors: true
+
+  vars:
+    - register_control: false
+
+  roles:
+    - name: build-nodes
+
+    - name: register-control-node
+      when:
+        - (register_control is defined) and
+          (register_control == true) and
+          ('control' in group_names)
