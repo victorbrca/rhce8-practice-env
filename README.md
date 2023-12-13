@@ -2,11 +2,11 @@
 
 An RHCE v8 lab enviroment with practice exams.
 
-![welcome](Welcome-page.jpg)
+![welcome](Welcome-page.png)
 
-This repo contains Vagrant and Ansible code that will help you setup a lab environment and practice for the RHCE v8 exam.
+If you are preparing for the RHCE v8 exam, this repo will help you create a lab environment and practice the exam objectives.
 
-The lab environment consists of 1x control node (RHEL server with GUI), one local repo server, and 4x additional nodes.
+The repo contains Vagrant and Ansible files that will set up 1x control node (RHEL server with GUI), one local repo server, and 4x other nodes.
 
 + control
 + repo
@@ -14,6 +14,8 @@ The lab environment consists of 1x control node (RHEL server with GUI), one loca
 + node2
 + node3
 + node4
+
+The control node will have access to the local repo server and the other nodes, which will simulate the exam scenario.
 
 ## Setting Up the Environment
 
@@ -83,41 +85,32 @@ Use the commands below to control your environment with Vagrant:
 
 ### Reseting the environment
 
-Use `vagrant destroy -f` and `vagrant up` to recreate the environment. You can also recreate a specific image by providing the node to the two commands, and then running the build playbook limiting that machine on the control node. 
+Use `vagrant destroy -f` and `vagrant up` to recreate the environment. You can also recreate a specific node by providing the node name to the two commands.
 
 For example:
 
-```bash
-cd /vagrant
-ansible-playbook playbooks/build-nodes.yml --limit node1
-```
+	vagrant destroy -f node1
+	
+	vagrant up node1
 
 ### Accessing the systems
 
-You can access the systems using `vagrant ssh [vm name]`:
-
-Example:
-
-```
-vagrant ssh node1
-```
-
-Via the Virtual Box Manager, or you can ssh to the VM using your systems built-in SSH client:
-
-```
-ssh vagrant@192.168.55.201
-```
+There are three ways to access the systems:
++ With `vagrant ssh [node]`
++ Via VirtualBox Manager
++ Using the built-in SSH client for you OS `ssh vagrant@192.168.55.201`
 
 >[!tip]
 > Add the IP addresses to your local host file if you want to connect to the guest systems with the hostname.
 
 ## Practice Exams
 
-A few practice exams are included. See the [Practice Exams](./practice_exams/README.md) page.
+A few practice exams are available at the [RHCE8 Practice Exams](https://rhce-practice-exam.org/rhce8/readme.html) page.
 
 ## Exam Material
 
-A collection of information for the RHCE v8 exam. See the [Exam Material](./ExamMaterial.md) page.
++ [Exam Information](https://rhce-practice-exam.org/exam-information.html) - A collection of information for the RHCE exam.
++ [Study Resources](https://rhce-practice-exam.org/study-resources.html) - A list of books, courses, communities and external practice exams.
 
 ## Red Hat Developer Program (FREE RHEL Licenses)
 
@@ -201,8 +194,16 @@ VBoxManage: error: VDI: cannot create image 'rhce8env/disk-0-4.vdi' (VERR_ALREAD
 
 If you have VirtualBox Manager open, check the disks in the 'Media' section and you might notice that a disk for a deleted VM is still listed. If the file itself doesn't exist, close the VirtualBox Manager and try running `vagrant up` again.
 
+## Author
+
+**Victor Mendonça**
+
++ Site - [Victor Mendonça](https://victormendonca.com/)
++ GitHub - [victorbrca](https://github.com/victorbrca)
++ Twitter - [@victorbrca](https://twitter.com/victorbrca)
+
 ## Acknowledgements
 
-This project is a fork of the [rdbreak/rhce8env](https://github.com/rdbreak/rhce8env) project with heavy customization.
+This project is a fork of the [rdbreak/rhce8env](https://github.com/rdbreak/rhce8env) project, but it has many extra features and modifications.
 
 Exam 1 is a variation of the of the [Lisenet: Ansible Sample Exam for RHCE EX294 and EX407](https://www.lisenet.com/2019/ansible-sample-exam-for-ex294/).
