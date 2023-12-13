@@ -221,6 +221,34 @@
       become: false
 ## End block
 
+##-- Downloads exam files for repo ---------------------------------------------
+
+## Start block
+- name: Downloads exam files for repo
+  when: "'control' in group_names"
+  block:
+
+  - name: Create /rhce-practice-exam/
+    ansible.builtin.file:
+      path: /rhce-practice-exam
+      owner: vagrant
+      group: vagrant
+      state: directory
+
+  - name: Clones the rhce-practice-exam
+    ansible.builtin.git:
+      repo: https://github.com/victorbrca/rhce-practice-exam
+      dest: /rhce-practice-exam
+    become: true
+    become_user: vagrant
+
+  - name: Fixes id.rsa permission
+    ansible.builtin.file:
+      path: /rhce-practice-exam/rhce8/exam1/validation/id_rsa
+      mode: 0600
+      state: touch
+## End block
+
 ##-- Wrap up -------------------------------------------------------------------
 
 - name: Erasing Repos
