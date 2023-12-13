@@ -1,8 +1,0 @@
----
-# handlers file for journald-persistent
-
-- name: Restarts
-  systemd:
-    name: systemd-journald.service
-    state: restarted
-  listen: "Restart Journald"
